@@ -1,0 +1,73 @@
+# =============================================================
+# Docker Compose — Local Development Environment
+# =============================================================
+#
+# WHAT IS THIS?
+# Docker Compose lets you run multiple services (like databases)
+# with a single command. Instead of installing PostgreSQL on your
+# machine, Docker runs it in an isolated container.
+#
+# HOW TO USE:
+#   Start:   docker compose up -d
+#   Stop:    docker compose down
+#   Logs:    docker compose logs -f postgres
+#   Reset:   docker compose down -v  (deletes all data!)
+#
+# WHY USE DOCKER FOR DEVELOPMENT?
+# 1. Everyone on a team gets the same database version
+# 2. No "works on my machine" problems
+# 3. Easy to reset — just delete the volume
+# 4. Matches production setup (containers everywhere)
+# =============================================================
+
+services:
+
+  postgres:
+    # Official PostgreSQL 16 image from Docker Hub
+    image: postgres:16-alpine
+    # alpine = smaller image size (~80MB vs ~400MB)
+
+    container_name: linkpulse-db
+
+    environment:
+      # These create the database and user on first startup.
+      # In production, NEVER hardcode passwords — use secrets.
+      # For local development, simple passwords are fine.
+      POSTGRES_DB: linkpulse
+      POSTGRES_USER: linkpulse
+      POSTGRES_PASSWORD: linkpulse123
+
+    ports:
+      # Maps port 5432 inside container → 5432 on your machine.
+      # So your Spring Boot app connects to localhost:5432
+      - "5433:5432"
+
+    volumes:
+      # Named volume = data survives container restarts.
+      # Without this, your data disappears when you run
+      # "docker compose down". With this, only "down -v" deletes data.
+      - pgdata:/var/lib/postgresql/data
+
+    healthcheck:
+      # Docker will check if PostgreSQL is actually ready,
+      # not just "process is running." This matters when
+      # other services depend on the database being ready.
+      test: ["CMD-SHELL", "pg_isready -U linkpulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+# ---------------------------------------------------------------
+# WHAT YOU'LL ADD LATER:
+# ---------------------------------------------------------------
+# Weekend 5:  redis service (caching)
+# Weekend 6:  rabbitmq service (message queue)
+# Weekend 9:  elasticsearch service (search)
+# Weekend 11: prometheus + grafana services (monitoring)
+# ---------------------------------------------------------------
+
+volumes:
+  pgdata:
+    # Named volume — Docker manages the storage location.
+    # Run "docker volume ls" to see all volumes.
+    # Run "docker volume inspect linkpulse_pgdata" for details.

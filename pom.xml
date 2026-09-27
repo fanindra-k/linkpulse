@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        WHAT IS THIS FILE?
+        ==================
+        pom.xml is the "recipe" for your project. It tells Maven:
+        1. What your project is called (groupId + artifactId)
+        2. What version of Java to use
+        3. What libraries (dependencies) to download
+
+        IMPORTANT: We're only adding dependencies needed for Phase 1.
+        As you progress through weekends, you'll add more here:
+        - Weekend 3: spring-boot-starter-security + jjwt (authentication)
+        - Weekend 5: spring-boot-starter-data-redis (caching)
+        - Weekend 6: spring-boot-starter-amqp (message queue)
+        - Weekend 9: spring-boot-starter-data-elasticsearch (search)
+    -->
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.15</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+
+    <groupId>com.linkpulse</groupId>
+    <artifactId>linkpulse</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>LinkPulse</name>
+    <description>AI-powered bookmark and knowledge manager</description>
+
+    <properties>
+        <!-- Java 21: We use the latest LTS version.
+             This gives us: virtual threads, record patterns,
+             sealed classes, and other modern features.
+             In interviews, mentioning Java 21 features shows
+             you stay current. -->
+        <java.version>21</java.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- 1. Spring Web: Gives us the ability to create REST APIs.
+                Includes: @RestController, @GetMapping, @PostMapping,
+                embedded Tomcat server, JSON serialization (Jackson). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- 2. Spring Data JPA: Lets us talk to the database using
+                Java objects instead of writing raw SQL.
+                Includes: @Entity, JpaRepository, @Query.
+                Under the hood, it uses Hibernate as the ORM. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- 3. PostgreSQL Driver: The JDBC driver that lets Java
+                connect to PostgreSQL. Without this, JPA can't
+                communicate with our database. -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+            <!-- scope=runtime means this is only needed when the app
+                 runs, not when compiling. Makes sense because our code
+                 talks to JPA interfaces, not PostgreSQL directly. -->
+        </dependency>
+
+        <!-- 4. Flyway: Manages database schema changes (migrations).
+                Instead of manually running ALTER TABLE scripts,
+                we write versioned SQL files and Flyway applies them
+                in order. This is how professional teams manage DBs.
+                
+                WHY NOT ddl-auto=update?
+                In production, ddl-auto can accidentally drop columns
+                or corrupt data. Flyway gives you full control and
+                a history of every schema change. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+
+        <!-- 5. Validation: Lets us validate incoming API requests.
+                Instead of writing if-else checks manually, we use
+                annotations like @NotBlank, @Size, @URL on our DTOs.
+                Spring automatically returns 400 Bad Request if
+                validation fails. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- 6. Testing: JUnit 5 + Spring Test utilities.
+                We'll write tests starting Weekend 8. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- This plugin creates an executable JAR file.
+                 When we run `mvn package`, it produces a single
+                 .jar file that contains our app + all dependencies.
+                 This is what we'll put inside our Docker container. -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

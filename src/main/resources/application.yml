@@ -1,0 +1,79 @@
+# =============================================================
+# Application Configuration
+# =============================================================
+#
+# WHAT IS THIS?
+# Spring Boot reads this file on startup to configure everything.
+# YAML format is preferred over .properties because it's easier
+# to read and supports nested structure.
+#
+# PROFILES:
+# We'll add a 'prod' profile later (Weekend 4) for deployment.
+# For now, this is our development configuration.
+# =============================================================
+
+spring:
+  application:
+    name: linkpulse
+
+  # ---- Database Configuration ----
+  datasource:
+    # This URL points to the PostgreSQL running in Docker Compose.
+    # Format: jdbc:postgresql://HOST:PORT/DATABASE_NAME
+    url: jdbc:postgresql://localhost:5433/linkpulse
+    username: linkpulse
+    password: linkpulse123
+    # NOTE: In production, these will come from environment variables.
+    # We'll set that up in Weekend 4 using ${DB_URL:default_value} syntax.
+
+  # ---- JPA / Hibernate Configuration ----
+  jpa:
+    # IMPORTANT: We set ddl-auto to "validate" (not "update" or "create").
+    #
+    # WHY?
+    # - "update": Hibernate guesses what SQL to run. It can silently
+    #   drop columns, lose data, or create wrong indexes. Dangerous.
+    # - "validate": Hibernate only CHECKS that entities match the
+    #   actual database schema. If they don't match, the app fails
+    #   to start — which is what we want! Fail fast.
+    # - Flyway handles all schema changes via version-controlled SQL files.
+    hibernate:
+      ddl-auto: validate
+
+    # Show SQL in console during development.
+    # This helps you understand what JPA is doing under the hood.
+    # Turn this OFF in production (it floods logs).
+    show-sql: true
+
+    properties:
+      hibernate:
+        # Format the SQL output for readability
+        format_sql: true
+
+  # ---- Flyway Configuration ----
+  flyway:
+    # Flyway looks for migration files in this folder.
+    # Files must be named: V1__description.sql, V2__description.sql, etc.
+    # The double underscore (__) is required — it separates
+    # version number from description.
+    locations: classpath:db/migration
+    # Flyway runs automatically on startup. It checks which
+    # migrations have already been applied (stored in flyway_schema_history
+    # table) and only runs new ones.
+
+# ---- Server Configuration ----
+server:
+  port: 8080
+  # All our API endpoints will start with /api
+  # So: http://localhost:8080/api/bookmarks
+  servlet:
+    context-path: /api
+
+# ---- Logging ----
+logging:
+  level:
+    # Show our application logs at DEBUG level during development.
+    # This helps understand what's happening step by step.
+    com.linkpulse: DEBUG
+    # Show SQL parameter values (by default, Hibernate shows ? placeholders)
+    org.hibernate.orm.jdbc.bind: TRACE
