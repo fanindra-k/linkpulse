@@ -24,6 +24,7 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
             // Registration and login — must be open before a token exists
             "/v1/auth/**",
+            "/bookmarks",
 
             // Swagger / OpenAPI UI — open during development
             "/swagger-ui/**",
