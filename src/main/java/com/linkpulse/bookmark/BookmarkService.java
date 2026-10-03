@@ -14,7 +14,7 @@ public class BookmarkService {
         this.bookmarkRepository = bookmarkRepository;
     }
 
-    public BookmarkResponse createBookmark(BookmarkRequestDto dto) {
+    public BookmarkResponse createBookmark(BookmarkRequest dto) {
         log.debug("Creating bookmark: {}", dto);
         var bookmark = Bookmark.builder()
                 .url(dto.url())

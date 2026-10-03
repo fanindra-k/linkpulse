@@ -116,6 +116,25 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles: EmailAlreadyExistException → 409 Conflict
+     *
+     * Triggered when a user tries to register with an email
+     * that already exists in the system.
+     */
+    @ExceptionHandler(EmailAlreadyExistException.class)
+    public ResponseEntity<Map<String, Object>> handleEmailAlreadyExistException(
+            EmailAlreadyExistException ex
+    ) {
+        log.warn("Email already exists: {}", ex.getMessage());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(buildErrorBody(
+                        HttpStatus.CONFLICT,
+                        "Email already exists. Please use a different email.")
+                );
+    }
+    /**
      * Builds a consistent error response body.
      *
      * All our error responses follow the same structure:
