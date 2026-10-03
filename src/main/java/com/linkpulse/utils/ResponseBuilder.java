@@ -1,15 +1,12 @@
 package com.linkpulse.utils;
 
-import java.time.Instant;
-
 public class ResponseBuilder {
 
-    public static Response build(String message, BaseResponse response) {
+    public static <T extends BaseResponse> Response<T> build(String message, T response) {
 
-        return Response.builder()
+        return Response.<T>builder()
                 .message(message)
-                .timestamp(Instant.now())
-                .response(response)
+                .data(response)
                 .build();
     }
 }
