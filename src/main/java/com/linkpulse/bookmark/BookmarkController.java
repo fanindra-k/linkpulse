@@ -29,4 +29,10 @@ public class BookmarkController {
         BookmarkResponse response = bookmarkService.createBookmark(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+//    public ResponseEntity<BookmarkResponse> getBookmark(@Valid @RequestBody BookmarkRequest dto) {
+//        log.info("GET /bookmarks, {}", dto);
+//        BookmarkResponse response = bookmarkService.getBookmark(dto);
+//        return ResponseEntity.ok(response);
+//    }
 }

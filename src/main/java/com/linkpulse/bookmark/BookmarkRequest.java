@@ -11,6 +11,8 @@ public record BookmarkRequest(
         @Size(max = 2048, message = "URL must be under 2048 characters")
         String url,
 
+        Integer id,
+        
         @NotBlank(message = "Title is required")
         @Size(max = 500, message = "Title must be under 500 characters")
         String title,
