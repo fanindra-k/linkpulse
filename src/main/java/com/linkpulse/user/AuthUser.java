@@ -1,5 +1,6 @@
 package com.linkpulse.user;
 
+import com.linkpulse.role.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,8 +9,15 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.security.Principal;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity(name = "auth_user")
 @Data
@@ -17,7 +25,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class AuthUser {
+public class AuthUser implements UserDetails , Principal {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -45,4 +53,33 @@ public class AuthUser {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "auth_user_roles",
+            joinColumns = @JoinColumn(name = "auth_user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private List<Role> roles;
+
+
+    @Override
+    public String getName() {
+        return this.email;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (this.roles == null) {
+            return List.of();
+        }
+        return this.roles
+                .stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email;
+    }
 }

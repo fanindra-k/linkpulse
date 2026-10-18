@@ -77,3 +77,8 @@ logging:
     com.linkpulse: DEBUG
     # Show SQL parameter values (by default, Hibernate shows ? placeholders)
     org.hibernate.orm.jdbc.bind: TRACE
+
+app:
+  jwt:
+    secret: YnJhdmVib25ldW5oYXBweWNvd3BsYW50c2hlcmVsYXRpb25zaGlwZXhwbGFpbnNpbGU=
+    expiration-ms: 3600000 # 1 hour in milliseconds
