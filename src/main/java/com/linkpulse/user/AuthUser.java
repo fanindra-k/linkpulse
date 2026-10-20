@@ -64,7 +64,7 @@ public class AuthUser implements UserDetails , Principal {
 
     @Override
     public String getName() {
-        return this.email;
+        return this.firstName + " " + this.lastName;
     }
 
     @Override

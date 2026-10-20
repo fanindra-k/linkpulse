@@ -24,4 +24,10 @@ public class AuthenticationController {
         Response<RegistrationResponse> response = authenticationService.registerUser(user);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
+
+    @PostMapping("/v1/auth/signin")
+    public ResponseEntity<Response<LoginResponse>> loginUser(@Valid @RequestBody LoginRequest loginRequest){
+        var response = authenticationService.loginUser(loginRequest);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }
