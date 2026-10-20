@@ -64,6 +64,9 @@ public class AuthUser implements UserDetails , Principal {
 
     @Override
     public String getName() {
+        if (this.lastName == null || this.lastName.isBlank()) {
+            return this.firstName;
+        }
         return this.firstName + " " + this.lastName;
     }
 

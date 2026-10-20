@@ -25,7 +25,7 @@ public class AuthenticationController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PostMapping("/v1/auth/signin")
+    @PostMapping("/signin")
     public ResponseEntity<Response<LoginResponse>> loginUser(@Valid @RequestBody LoginRequest loginRequest){
         var response = authenticationService.loginUser(loginRequest);
         return new ResponseEntity<>(response, HttpStatus.OK);
