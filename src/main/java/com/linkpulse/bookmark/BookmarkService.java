@@ -2,6 +2,7 @@ package com.linkpulse.bookmark;
 
 import com.linkpulse.user.AuthUser;
 import com.linkpulse.user.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -18,15 +19,24 @@ public class BookmarkService {
         this.userRepository = userRepository;
     }
 
-    public BookmarkResponse createBookmark(BookmarkRequest dto) {
-        log.debug("Creating bookmark: {}", dto);
-        AuthUser authUser = userRepository.findById(dto.id()).orElseThrow(() -> new IllegalArgumentException("User not found"));
+    @Transactional
+    public BookmarkResponse createBookmark(BookmarkRequest request) {
+        log.debug("Creating bookmark: {}", request);
+//        AuthUser authUser = userRepository.findById(dto.id()).orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // 1. Get proxy without hitting DB
+        var authUserProxy = userRepository.getReferenceById(request.id());
+
+        // 2. Build bookmark
         var bookmark = Bookmark.builder()
-                .url(dto.url())
-                .title(dto.title())
-                .description(dto.description())
-                .user(authUser)
+
+                .url(request.url())
+                .title(request.title())
+                .description(request.description())
+                .user(authUserProxy)
                 .build();
+
+        // 3. Single INSERT into DB
         var savedBookmark = bookmarkRepository.save(bookmark);
         log.debug("Bookmark created: {}", savedBookmark);
         return BookmarkResponse.from(savedBookmark);
