@@ -1,14 +1,19 @@
 package com.linkpulse.exception;
 
 import com.linkpulse.bookmark.BookmarkNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.HttpClientErrorException;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -97,23 +102,23 @@ public class GlobalExceptionHandler {
      * here, we log it (for debugging) and return a generic error
      * to the client. We never expose stack traces to the client.
      */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(
-            Exception ex
-    ) {
-        // Log the full stack trace — this is for US to debug
-        log.error("Unexpected error occurred", ex);
-
-        // Return a generic message — this is for the CLIENT
-        // Never expose internal details (class names, stack traces)
-        // because attackers can use that information.
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(buildErrorBody(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "An unexpected error occurred. Please try again later."
-                ));
-    }
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<Map<String, Object>> handleGenericException(
+//            Exception ex
+//    ) {
+//        // Log the full stack trace — this is for US to debug
+//        log.error("Unexpected error occurred", ex);
+//
+//        // Return a generic message — this is for the CLIENT
+//        // Never expose internal details (class names, stack traces)
+//        // because attackers can use that information.
+//        return ResponseEntity
+//                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                .body(buildErrorBody(
+//                        HttpStatus.INTERNAL_SERVER_ERROR,
+//                        "An unexpected error occurred. Please try again later."
+//                ));
+//    }
 
     /**
      * Handles: EmailAlreadyExistException → 409 Conflict
@@ -148,6 +153,35 @@ public class GlobalExceptionHandler {
      * Consistency matters — API consumers can always expect
      * the same error format, making their error handling simpler.
      */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiErrorResponse> handleValidation(
+            BadCredentialsException ex,
+            HttpServletRequest request) {
+        log.error("Validation error: {}", ex.getMessage());
+        return buildError(
+                HttpStatus.UNAUTHORIZED,
+                "INVALID_CREDENTIALS",
+                "Invalid credentials provided.",
+                request
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse> handleUnexpected(
+            Exception ex,
+            HttpServletRequest request) {
+
+        // Log the exception internally with a trace ID.
+        // Do not expose ex.getMessage() to the client.
+        log.error("Unexpected error occurred: {}", ex.getMessage(), ex);
+        return buildError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "INTERNAL_ERROR",
+                "An unexpected error occurred.",
+                request
+        );
+    }
+
     private Map<String, Object> buildErrorBody(HttpStatus status, String message) {
         Map<String, Object> body = new HashMap<>();
         body.put("status", status.value());
@@ -155,5 +189,27 @@ public class GlobalExceptionHandler {
         body.put("message", message);
         body.put("timestamp", Instant.now().toString());
         return body;
+    }
+
+    private ResponseEntity<ApiErrorResponse> buildError(
+            HttpStatus status,
+            String code,
+            String detail,
+            HttpServletRequest request) {
+
+        ApiErrorResponse body = new ApiErrorResponse(
+                URI.create("about:blank"),
+                status.getReasonPhrase(),
+                status.value(),
+                detail,
+                request.getRequestURI(),
+                code,
+                Instant.now(),
+                MDC.get("traceId")
+        );
+
+        return ResponseEntity.status(status)
+                .header("Cache-Control", "no-store")
+                .body(body);
     }
 }
