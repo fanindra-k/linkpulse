@@ -21,8 +21,9 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 public class Role {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "role_seq")
+    @SequenceGenerator(name = "role_seq", sequenceName = "role_seq", allocationSize = 50)
+    private Long id;
     @Column(unique = true)
     private String name;
     @ManyToMany(mappedBy = "roles")

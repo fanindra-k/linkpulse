@@ -28,9 +28,9 @@ import java.util.stream.Collectors;
 public class AuthUser implements UserDetails , Principal {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
     @SequenceGenerator(name = "user_seq", sequenceName = "user_sequence", allocationSize = 50)
-    private Integer id;
+    private Long id;
 
     @Column(nullable = false, length = 100)
     private String firstName;

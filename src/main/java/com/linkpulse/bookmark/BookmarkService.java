@@ -20,7 +20,7 @@ public class BookmarkService {
     }
 
     @Transactional
-    public BookmarkResponse createBookmark(BookmarkRequest request, Integer id) {
+    public BookmarkResponse createBookmark(BookmarkRequest request, Long id) {
         log.debug("Creating bookmark: {}", request);
 //        AuthUser authUser = userRepository.findById(dto.id()).orElseThrow(() -> new IllegalArgumentException("User not found"));
 

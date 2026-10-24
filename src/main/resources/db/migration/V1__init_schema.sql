@@ -19,7 +19,7 @@ CREATE TABLE role (
 
 -- 2. Auth User Table
 CREATE TABLE auth_user (
-    id          INTEGER PRIMARY KEY,
+    id          BIGINT PRIMARY KEY,
     first_name  VARCHAR(100) NOT NULL,
     last_name   VARCHAR(100),
     email       VARCHAR(254) NOT NULL,
