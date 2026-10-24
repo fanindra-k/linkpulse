@@ -1,10 +1,12 @@
 package com.linkpulse.bookmark;
 
+import com.linkpulse.user.AuthUser;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,10 +25,13 @@ public class BookmarkController {
     }
 
     @PostMapping
-    public ResponseEntity<BookmarkResponse> createBookmark(@Valid @RequestBody BookmarkRequest dto) {
+    public ResponseEntity<BookmarkResponse> createBookmark(
+            @Valid @RequestBody BookmarkRequest dto,
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
         log.info("POST /bookmarks, {}", dto);
 //        return ResponseEntity.ok(bookmarkService.createBookmark(dto));
-        BookmarkResponse response = bookmarkService.createBookmark(dto);
+        BookmarkResponse response = bookmarkService.createBookmark(dto, authUser.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

@@ -20,12 +20,12 @@ public class BookmarkService {
     }
 
     @Transactional
-    public BookmarkResponse createBookmark(BookmarkRequest request) {
+    public BookmarkResponse createBookmark(BookmarkRequest request, Integer id) {
         log.debug("Creating bookmark: {}", request);
 //        AuthUser authUser = userRepository.findById(dto.id()).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         // 1. Get proxy without hitting DB
-        var authUserProxy = userRepository.getReferenceById(request.id());
+        var authUserProxy = userRepository.getReferenceById(id);
 
         // 2. Build bookmark
         var bookmark = Bookmark.builder()

@@ -67,7 +67,7 @@ server:
   # All our API endpoints will start with /api
   # So: http://localhost:8080/api/bookmarks
   servlet:
-    context-path: /api
+    context-path: /api/v1
 
 # ---- Logging ----
 logging:
