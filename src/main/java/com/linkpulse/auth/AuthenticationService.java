@@ -5,10 +5,11 @@ import com.linkpulse.role.RoleRepository;
 import com.linkpulse.security.JwtService;
 import com.linkpulse.user.AuthUser;
 import com.linkpulse.user.UserRepository;
+import com.linkpulse.utils.ApiResponse;
 import com.linkpulse.utils.MessagesConstant;
-import com.linkpulse.utils.Response;
 import com.linkpulse.utils.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +22,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationService {
 
     private final UserRepository userRepository;
@@ -31,7 +33,7 @@ public class AuthenticationService {
     private final Environment env;
 
 
-    public Response<RegistrationResponse> registerUser(RegistrationRequest registrationRequest) {
+    public ApiResponse<RegistrationResponse> registerUser(RegistrationRequest registrationRequest) {
         var userRole = roleRepository.findByName("ROLE_USER")
                 .orElseThrow(() -> new RuntimeException("Default role not found"));
         var authUser = AuthUser.builder()
@@ -51,12 +53,13 @@ public class AuthenticationService {
                     .build();
             return ResponseBuilder.build("User registered successfully", response);
 
-        }catch(DataIntegrityViolationException ex){
-            throw new EmailAlreadyExistException(ex.getMessage());
+        }catch (DataIntegrityViolationException ex) {
+            log.warn("Duplicate email on registration", ex);
+            throw new EmailAlreadyExistException();
         }
     }
 
-    public Response<LoginResponse> loginUser(LoginRequest loginRequest) {
+    public ApiResponse<LoginResponse> authenticate(LoginRequest loginRequest) {
 
         var auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -85,8 +88,8 @@ public class AuthenticationService {
         return buildResponse(response);
     }
 
-    private Response<LoginResponse> buildResponse(LoginResponse data) {
-        return Response.<LoginResponse>builder()
+    private ApiResponse<LoginResponse> buildResponse(LoginResponse data) {
+        return ApiResponse.<LoginResponse>builder()
                 .success(true)
                 .message(MessagesConstant.USER_LOGIN_SUCCESSFULLY)
                 .data(data)

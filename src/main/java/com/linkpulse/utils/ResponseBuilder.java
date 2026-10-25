@@ -2,9 +2,9 @@ package com.linkpulse.utils;
 
 public class ResponseBuilder {
 
-    public static <T extends BaseResponse> Response<T> build(String message, T response) {
+    public static <T extends BaseResponse> ApiResponse<T> build(String message, T response) {
 
-        return Response.<T>builder()
+        return ApiResponse.<T>builder()
                 .message(message)
                 .data(response)
                 .build();

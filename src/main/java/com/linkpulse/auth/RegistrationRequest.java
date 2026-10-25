@@ -25,7 +25,8 @@ public record RegistrationRequest(
         //         produce the same hash — a silent security downgrade.
         @NotBlank(message = "Password is required")
         @Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters")
-        String password) {
+        String password
+) {
 
     public RegistrationRequest(
             String firstName,
@@ -35,6 +36,6 @@ public record RegistrationRequest(
         this.firstName = ValidationUtils.normalizeText(firstName);
         this.lastName = ValidationUtils.normalizeText(lastName);
         this.email = ValidationUtils.normalizeEmail(email);
-        this.password = ValidationUtils.normalizeText(password);
+        this.password = password;
     }
 }
