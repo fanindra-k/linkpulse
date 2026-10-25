@@ -103,7 +103,15 @@ public class AuthenticationService {
     }
 
     private static boolean isEmailUniqueViolation(DataIntegrityViolationException ex) {
-        return ex.getCause() instanceof org.hibernate.exception.ConstraintViolationException cve
-                && "idx_auth_user_email".equals(cve.getConstraintName());
+        if (ex.getCause() instanceof org.hibernate.exception.ConstraintViolationException cve) {
+            String constraint = cve.getConstraintName();
+            if ("idx_auth_user_email".equalsIgnoreCase(constraint)) {
+                return true;
+            }
+            // Fallback: check raw error message if constraint name extraction failed
+            String message = cve.getMessage();
+            return message != null && message.contains("idx_auth_user_email");
+        }
+        return false;
     }
 }

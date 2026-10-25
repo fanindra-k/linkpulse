@@ -7,6 +7,7 @@ public class ResponseBuilder {
         return ApiResponse.<T>builder()
                 .message(message)
                 .data(response)
+                .success(true)
                 .build();
     }
 }
