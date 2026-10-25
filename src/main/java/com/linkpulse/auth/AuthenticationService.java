@@ -54,8 +54,14 @@ public class AuthenticationService {
             return ResponseBuilder.build("User registered successfully", response);
 
         }catch (DataIntegrityViolationException ex) {
-            log.warn("Duplicate email on registration", ex);
-            throw new EmailAlreadyExistException();
+            if (isEmailUniqueViolation(ex)) {
+                // Check if the root cause was the unique email index (PostgreSQL error code 23505 or constraint name)
+                log.warn("Duplicate email on registration: {}", registrationRequest.email());
+                throw new EmailAlreadyExistException(ex);
+            }
+            // If it was another constraint (e.g., FK or NOT NULL), re-throw so it becomes an unexpected 500 error
+            log.error("Unexpected database constraint violation during registration", ex);
+            throw ex;
         }
     }
 
@@ -94,5 +100,10 @@ public class AuthenticationService {
                 .message(MessagesConstant.USER_LOGIN_SUCCESSFULLY)
                 .data(data)
                 .build();
+    }
+
+    private static boolean isEmailUniqueViolation(DataIntegrityViolationException ex) {
+        return ex.getCause() instanceof org.hibernate.exception.ConstraintViolationException cve
+                && "idx_auth_user_email".equals(cve.getConstraintName());
     }
 }
