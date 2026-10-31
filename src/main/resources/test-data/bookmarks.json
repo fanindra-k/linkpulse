@@ -1,0 +1,17 @@
+[
+  {
+    "url": "https://spring.io/guides",
+    "title": "Spring Guides",
+    "description": "Official guides for building applications with the Spring framework."
+  },
+  {
+    "url": "https://docs.docker.com/get-started/",
+    "title": "Docker Get Started",
+    "description": "A hands-on introduction to Docker containers, images, and essential workflows."
+  },
+  {
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+    "title": "JavaScript Guide - MDN",
+    "description": "A comprehensive reference and guide to JavaScript language features and APIs."
+  }
+]

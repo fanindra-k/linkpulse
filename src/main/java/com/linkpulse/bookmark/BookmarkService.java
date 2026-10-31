@@ -1,13 +1,12 @@
 package com.linkpulse.bookmark;
 
-import com.linkpulse.user.AuthUser;
 import com.linkpulse.user.UserRepository;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.api.OpenApiResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 
 
@@ -25,7 +24,16 @@ public class BookmarkService {
 
     @Transactional
     public BookmarkResponse createBookmark(BookmarkRequest request, Long id) {
-        return null;
+        var bookmark = Bookmark.builder()
+                .title(request.title())
+                .description(request.description())
+                .url(request.url())
+                .user(userRepository.findById(id).orElse(null))
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+        var savedBookmark = bookmarkRepository.save(bookmark);
+        return BookmarkResponse.from(savedBookmark);
     }
 
     public List<BookmarkResponse> getBookmark(Long userId) {
