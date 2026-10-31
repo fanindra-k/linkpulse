@@ -3,8 +3,12 @@ package com.linkpulse.bookmark;
 import com.linkpulse.user.AuthUser;
 import com.linkpulse.user.UserRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.api.OpenApiResourceNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 
 @Service
@@ -21,24 +25,13 @@ public class BookmarkService {
 
     @Transactional
     public BookmarkResponse createBookmark(BookmarkRequest request, Long id) {
-        log.debug("Creating bookmark: {}", request);
-//        AuthUser authUser = userRepository.findById(dto.id()).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return null;
+    }
 
-        // 1. Get proxy without hitting DB
-        var authUserProxy = userRepository.getReferenceById(id);
-
-        // 2. Build bookmark
-        var bookmark = Bookmark.builder()
-
-                .url(request.url())
-                .title(request.title())
-                .description(request.description())
-                .user(authUserProxy)
-                .build();
-
-        // 3. Single INSERT into DB
-        var savedBookmark = bookmarkRepository.save(bookmark);
-        log.debug("Bookmark created: {}", savedBookmark);
-        return BookmarkResponse.from(savedBookmark);
+    public List<BookmarkResponse> getBookmark(Long userId) {
+        var bookmarks = bookmarkRepository.findByUserId(userId).orElseThrow( () -> new OpenApiResourceNotFoundException("Bookmarks not found for user: " + userId));
+         return bookmarks.stream()
+                .map(BookmarkResponse::from)
+                .toList();
     }
 }
