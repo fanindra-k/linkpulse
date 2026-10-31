@@ -23,22 +23,24 @@ public class BookmarkService {
     }
 
     @Transactional
-    public BookmarkResponse createBookmark(BookmarkRequest request, Long id) {
+    public BookmarkResponse createBookmark(BookmarkRequest request, Long userId) {
+        log.debug("Creating bookmark for userId {}: {}", userId, request);
+        // Zero-query JPA proxy (attaches FK without SELECT)
+        var authUserProxy = userRepository.getReferenceById(userId);
         var bookmark = Bookmark.builder()
+                .url(request.url())
                 .title(request.title())
                 .description(request.description())
-                .url(request.url())
-                .user(userRepository.findById(id).orElse(null))
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
-                .build();
+                .user(authUserProxy)
+                .build(); // createdAt/updatedAt handled automatically by @CreationTimestamp
         var savedBookmark = bookmarkRepository.save(bookmark);
         return BookmarkResponse.from(savedBookmark);
     }
 
     public List<BookmarkResponse> getBookmark(Long userId) {
-        var bookmarks = bookmarkRepository.findByUserId(userId).orElseThrow( () -> new OpenApiResourceNotFoundException("Bookmarks not found for user: " + userId));
-         return bookmarks.stream()
+        log.debug("Fetching bookmarks for userId: {}", userId);
+        return bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
+                .stream()
                 .map(BookmarkResponse::from)
                 .toList();
     }
