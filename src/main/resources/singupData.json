@@ -1,0 +1,26 @@
+[
+  {
+    "firstName": "Aarav",
+    "lastName": "Sharma",
+    "email": "aarav.sharma@example.com",
+    "password": "Passw0rd123!"
+  },
+  {
+    "firstName": "Sophia",
+    "lastName": "Williams",
+    "email": "sophia.williams@example.org",
+    "password": "StrongPwd!456"
+  },
+  {
+    "firstName": "Kenji",
+    "lastName": "Tanaka",
+    "email": "kenji.tanaka@example.net",
+    "password": "SecurePass789#"
+  },
+  {
+    "firstName": "Fatima",
+    "lastName": "Ali",
+    "email": "fatima.ali@example.com",
+    "password": "MySecretPwd2026$"
+  }
+]

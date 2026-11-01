@@ -1,5 +1,6 @@
 package com.linkpulse.bookmark;
 
+import com.linkpulse.user.AuthUser;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -20,6 +21,10 @@ public class Bookmark {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bookmark_seq")
     @SequenceGenerator(name = "bookmark_seq", sequenceName = "bookmark_sequence", allocationSize = 50)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private AuthUser user;
 
     @Column(nullable = false, length = 500)
     private String title;

@@ -1,16 +1,22 @@
 package com.linkpulse.exception;
 
-import com.linkpulse.bookmark.BookmarkNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.time.Instant;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -39,102 +45,100 @@ import java.util.Map;
  * consistent error response strategy across the entire API.
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    /**
-     * Handles: BookmarkNotFoundException → 404 Not Found
-     *
-     * Triggered when BookmarkService can't find a bookmark by ID.
-     */
-    @ExceptionHandler(BookmarkNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleBookmarkNotFound(
-            BookmarkNotFoundException ex
-    ) {
-        log.warn("Bookmark not found: {}", ex.getMessage());
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(buildErrorBody(HttpStatus.NOT_FOUND, ex.getMessage()));
+    // Spring MVC's own exceptions: 400/404/405/415...
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(
+            @NonNull Exception ex,
+            @Nullable Object body,
+            @NonNull HttpHeaders headers,
+            @NonNull HttpStatusCode status,
+            @NonNull WebRequest request) {
+        // The base class already built a sanitized ProblemDetail. Reuse its text, never ex.getMessage().
+        String detail = body instanceof ProblemDetail pd ? pd.getDetail() : null;
+        HttpStatus resolved = HttpStatus.resolve(status.value());
+        String code = resolved != null ? resolved.name() : "HTTP_" + status.value();
+        return respond(status, code, detail, req(request), null, headers, ex);
     }
 
-    /**
-     * Handles: Validation errors → 400 Bad Request
-     *
-     * Triggered when @Valid fails on a request body.
-     * For example, if the client sends { "url": "", "title": "" },
-     * the @NotBlank validations fail, and Spring throws
-     * MethodArgumentNotValidException.
-     *
-     * We extract the field-level errors and return them in a clean format:
-     * { "status": 400, "errors": { "url": "URL is required", "title": "..." } }
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationErrors(
-            MethodArgumentNotValidException ex
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            @NonNull MethodArgumentNotValidException ex,
+            @NonNull HttpHeaders headers,
+            @NonNull HttpStatusCode status,
+            @NonNull WebRequest request
     ) {
-        log.warn("Validation failed: {}", ex.getMessage());
+        Map<String, String> fields = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(e -> fields.putIfAbsent(e.getField(), e.getDefaultMessage()));
+        return respond(status, ErrorCode.VALIDATION_FAILED.name(),
+                ErrorCode.VALIDATION_FAILED.getDefaultMessage(), req(request), fields, headers, ex);
+    }
 
-        // Extract field-specific error messages
-        Map<String, String> fieldErrors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                fieldErrors.put(error.getField(), error.getDefaultMessage())
+    // All domain exceptions: one handler, forever
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<Object> handleApi(ApiException ex, HttpServletRequest req) {
+        return respond(ex.getErrorCode(), ex.getMessage(), req, ex);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex, HttpServletRequest req) {
+        return respond(ErrorCode.INVALID_CREDENTIALS, null, req, ex);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)   // missing/invalid token
+    public ResponseEntity<Object> handleAuthentication(AuthenticationException ex, HttpServletRequest req) {
+        return respond(ErrorCode.AUTHENTICATION_REQUIRED, null, req, ex);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)     // org.springframework.security.access
+    public ResponseEntity<Object> handleDenied(AccessDeniedException ex, HttpServletRequest req) {
+        return respond(ErrorCode.ACCESS_DENIED, null, req, ex);
+    }
+
+    @ExceptionHandler(Exception.class)                 // safety net
+    public ResponseEntity<Object> handleUnexpected(Exception ex, HttpServletRequest req) {
+        return respond(ErrorCode.INTERNAL_ERROR, null, req, ex);
+    }
+
+    // ---- the only place that builds a response ----
+    private ResponseEntity<Object> respond(ErrorCode ec, @Nullable String detail,
+                                           HttpServletRequest req, Throwable ex) {
+        return respond(
+                ec.getStatus(),
+                ec.name(),
+                detail != null ? detail : ec.getDefaultMessage(),
+                req,
+                null,
+                null,
+                ex
         );
-
-        Map<String, Object> body = buildErrorBody(
-                HttpStatus.BAD_REQUEST, "Validation failed"
-        );
-        body.put("errors", fieldErrors);
-
-        return ResponseEntity.badRequest().body(body);
     }
 
-    /**
-     * Handles: Everything else → 500 Internal Server Error
-     *
-     * This is the "safety net." If any unhandled exception reaches
-     * here, we log it (for debugging) and return a generic error
-     * to the client. We never expose stack traces to the client.
-     */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(
-            Exception ex
+    private ResponseEntity<Object> respond(
+            HttpStatusCode status,
+            String code,
+            @Nullable String detail,
+            HttpServletRequest req,
+            @Nullable Map<String, String> fieldErrors,
+            @Nullable HttpHeaders headers, Throwable ex
     ) {
-        // Log the full stack trace — this is for US to debug
-        log.error("Unexpected error occurred", ex);
-
-        // Return a generic message — this is for the CLIENT
-        // Never expose internal details (class names, stack traces)
-        // because attackers can use that information.
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(buildErrorBody(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
-                        "An unexpected error occurred. Please try again later."
-                ));
+        if (status.is5xxServerError()) {
+            log.error("{} {} -> {} [{}]", req.getMethod(), req.getRequestURI(), status.value(), code, ex);
+        } else {
+            log.warn("{} {} -> {} [{}] {}", req.getMethod(), req.getRequestURI(),
+                    status.value(), code, ex.getClass().getSimpleName());
+        }
+        return ResponseEntity.status(status)
+                .headers(headers)
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(ApiErrorResponse.of(status, code, detail, req.getRequestURI(), fieldErrors));
     }
 
-    /**
-     * Builds a consistent error response body.
-     *
-     * All our error responses follow the same structure:
-     * {
-     *   "status": 404,
-     *   "error": "Not Found",
-     *   "message": "Bookmark not found with id: 42",
-     *   "timestamp": "2024-01-15T10:30:00Z"
-     * }
-     *
-     * Consistency matters — API consumers can always expect
-     * the same error format, making their error handling simpler.
-     */
-    private Map<String, Object> buildErrorBody(HttpStatus status, String message) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("status", status.value());
-        body.put("error", status.getReasonPhrase());
-        body.put("message", message);
-        body.put("timestamp", Instant.now().toString());
-        return body;
+    private static HttpServletRequest req(WebRequest r) {
+        return ((ServletWebRequest) r).getRequest();
     }
 }
