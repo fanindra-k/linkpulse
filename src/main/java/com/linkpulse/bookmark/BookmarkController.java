@@ -63,4 +63,22 @@ public class BookmarkController {
         var response = bookmarkService.getBookmark(authUser.getId());
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/{id}")
+    @Operation(
+            summary = "Get a bookmark by ID",
+            description = "Returns a specific bookmark owned by the authenticated user."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Bookmark retrieved"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token"),
+            @ApiResponse(responseCode = "404", description = "Bookmark not found")
+    })
+    public ResponseEntity<BookmarkResponse> getBookmarkById(
+            @PathVariable long id,
+            @AuthenticationPrincipal AuthUser authUser
+    ){
+        var response = bookmarkService.getBookmark(id, authUser.getId());
+        return ResponseEntity.ok(response);
+    }
 }

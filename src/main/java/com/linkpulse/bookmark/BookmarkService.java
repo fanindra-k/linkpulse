@@ -1,12 +1,10 @@
 package com.linkpulse.bookmark;
 
 import com.linkpulse.user.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.api.OpenApiResourceNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 
 
@@ -37,11 +35,19 @@ public class BookmarkService {
         return BookmarkResponse.from(savedBookmark);
     }
 
+    @Transactional(readOnly = true)
     public List<BookmarkResponse> getBookmark(Long userId) {
         log.debug("Fetching bookmarks for userId: {}", userId);
         return bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(BookmarkResponse::from)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public BookmarkResponse getBookmark(Long bookmarkId,Long userId) {
+        log.debug("Fetching bookmarks for userId: {} and bookmarkId: {}", userId, bookmarkId);
+        var bookmark = bookmarkRepository.findByUserIdAndBookmarkId(userId, bookmarkId);
+        return BookmarkResponse.from(bookmark);
     }
 }
