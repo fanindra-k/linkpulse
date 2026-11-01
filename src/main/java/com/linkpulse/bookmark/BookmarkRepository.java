@@ -8,9 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
-    Optional<Bookmark> findById(long id);
-
-    Optional<List<Bookmark>> findByUserId(Long userId);
 
     // Return List<Bookmark> directly, ordered by newest first:
     List<Bookmark> findAllByUserIdOrderByCreatedAtDesc(Long userId);

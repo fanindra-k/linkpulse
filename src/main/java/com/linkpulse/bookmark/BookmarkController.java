@@ -30,7 +30,7 @@ public class BookmarkController {
         this.bookmarkService = bookmarkService;
     }
 
-    @PostMapping("/create-bookmark")
+    @PostMapping
     @Operation(
             summary = "Create a bookmark",
             description = "Creates a bookmark for the authenticated user. The owner is determined from the bearer token."
@@ -49,7 +49,7 @@ public class BookmarkController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/get-bookmarks")
+    @GetMapping
     @Operation(
             summary = "List my bookmarks",
             description = "Returns bookmarks owned by the authenticated user. No user ID is required in the request."
