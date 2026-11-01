@@ -60,7 +60,7 @@ public class BookmarkController {
     })
     public ResponseEntity<List<BookmarkResponse>> getBookmark(@AuthenticationPrincipal AuthUser authUser) {
         log.info("GET /bookmarks for user, {}", authUser.getId());
-        var response = bookmarkService.getBookmark(authUser.getId());
+        var response = bookmarkService.getBookmarkById(authUser.getId());
         return ResponseEntity.ok(response);
     }
 
@@ -78,7 +78,30 @@ public class BookmarkController {
             @PathVariable long id,
             @AuthenticationPrincipal AuthUser authUser
     ){
-        var response = bookmarkService.getBookmark(id, authUser.getId());
+        log.info("GET /bookmarks/{id}, userId: {}", authUser.getId());
+        var response = bookmarkService.getBookmarkById(id, authUser.getId());
         return ResponseEntity.ok(response);
+    }
+
+
+    @Operation(
+            summary = "Update a Bookmark by Id",
+            description = "Updates a specific bookmark owned by the authenticated user."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Bookmark retrieved"),
+            @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token"),
+            @ApiResponse(responseCode = "404", description = "Bookmark not found")
+    })
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BookmarkResponse> updateBookmark(
+            @PathVariable long id,
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody UpdateBookmarkRequest request
+    ) {
+        log.info("PUT /bookmarks/{id}, userId: {}", authUser.getId());
+        var response = bookmarkService.updateBookmarkById(id, authUser.getId(), request);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 }

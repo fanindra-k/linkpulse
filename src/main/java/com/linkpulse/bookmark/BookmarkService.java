@@ -1,6 +1,8 @@
 package com.linkpulse.bookmark;
 
+import com.linkpulse.exception.BookmarkNotFoundException;
 import com.linkpulse.user.UserRepository;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +38,7 @@ public class BookmarkService {
     }
 
     @Transactional(readOnly = true)
-    public List<BookmarkResponse> getBookmark(Long userId) {
+    public List<BookmarkResponse> getBookmarkById(Long userId) {
         log.debug("Fetching bookmarks for userId: {}", userId);
         return bookmarkRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
@@ -45,9 +47,22 @@ public class BookmarkService {
     }
 
     @Transactional(readOnly = true)
-    public BookmarkResponse getBookmark(Long bookmarkId,Long userId) {
+    public BookmarkResponse getBookmarkById(Long bookmarkId, Long userId) {
         log.debug("Fetching bookmarks for userId: {} and bookmarkId: {}", userId, bookmarkId);
-        var bookmark = bookmarkRepository.findByUserIdAndBookmarkId(userId, bookmarkId);
+        var bookmark = bookmarkRepository.findByIdAndUserId(bookmarkId, userId)
+                .orElseThrow(() -> new BookmarkNotFoundException(bookmarkId));
+        return BookmarkResponse.from(bookmark);
+    }
+
+    @Transactional
+    public BookmarkResponse updateBookmarkById(long id, Long userId, @Valid UpdateBookmarkRequest request) {
+        log.debug("Updating bookmark for userId: {} and bookmarkId: {}", userId, id);
+        var bookmark = bookmarkRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new BookmarkNotFoundException(id));
+        // Update the bookmark fields
+        bookmark.setTitle(request.title());
+        bookmark.setDescription(request.description());
+        bookmark.setUrl(request.url());
         return BookmarkResponse.from(bookmark);
     }
 }
